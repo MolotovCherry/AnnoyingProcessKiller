@@ -264,8 +264,9 @@ fn main() -> Result<(), Box<dyn Error>> {
             for _p in &data.processes {
                 let process = &*format!("{}.exe", _p.borrow());
                 if list.contains_key(process) {
-                    println!("Killing process {process}");
-                    kill_process(process, *list.get(process).unwrap())?;
+                    let pid = *list.get(process).unwrap();
+                    println!("Killing process {process} : {pid}");
+                    kill_process(process, pid)?;
                 }
             }
 
