@@ -1,4 +1,4 @@
-# AnnoyingProcessKiller
+# Annoying Process Killer
 Simple utility to watch for and kill processes that start up
 
 I made this because `CompatTelRunner.exe` wouldn't leave me alone, regardless of me following all the steps online to disable it.
@@ -9,10 +9,10 @@ Now it will never bother me again!
 `--hide` or `-h` will hide the console (for example if you want to autostart with Windows).
 
 ## Configuration
-Just add any other processes you want to watch for and kill to the config.json file, then restart the program. You can also adjust the polling speed (in seconds).
+Just add any other processes you want to watch for and kill to the `config.json` file, then restart the program. You can also adjust the polling speed (in seconds). This file will be auto generate the first time you run the program.
 
 ## How it works
-It uses the Windows API to grant special permissions to the program so it can kill privileged processes.
+It uses the Windows API to grant special permissions to the program so it can kill privileged processes, then it kills them if they're running.
 
 ## Setup
 Run as admin if you're trying to kill system processes (like `CompatTelRunner.exe`).
