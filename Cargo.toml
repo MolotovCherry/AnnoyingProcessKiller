@@ -28,4 +28,8 @@ features = [
     "Win32_Foundation",
     "Win32_Security",
     "Win32_System_Console",
+    "Win32_System_SystemServices"
 ]
+
+[profile.release]
+strip = "symbols"

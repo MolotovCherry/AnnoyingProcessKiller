@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use sysinfo::{ProcessExt, System, SystemExt, RefreshKind, ProcessRefreshKind, PidExt};
 
 use windows::Win32::System::Console::{AttachConsole, FreeConsole, ATTACH_PARENT_PROCESS};
+use windows::Win32::System::SystemServices::SE_DEBUG_NAME;
 use windows::Win32::System::Threading::{TerminateProcess, OpenProcess, PROCESS_TERMINATE, PROCESS_QUERY_INFORMATION, OpenProcessToken};
 use windows::Win32::Foundation::{GetLastError, CloseHandle, HANDLE, LUID};
 use windows::Win32::Security::{TOKEN_ADJUST_PRIVILEGES, LookupPrivilegeValueA, TOKEN_PRIVILEGES, SE_PRIVILEGE_ENABLED, AdjustTokenPrivileges, TOKEN_PRIVILEGES_ATTRIBUTES};
@@ -242,7 +243,7 @@ impl ProcessManager {
 
 fn main() -> Result<(), Box<dyn Error>> {
     // grab some needed program privileges
-    set_privilege("SeDebugPrivilege", true)?;
+    set_privilege(SE_DEBUG_NAME, true)?;
 
     // hide console
     let args: Vec<String> = std::env::args().collect();
