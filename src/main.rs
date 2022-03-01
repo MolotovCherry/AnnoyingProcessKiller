@@ -256,8 +256,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                 let process = &*format!("{_p}.exe");
                 if list.contains_key(process) {
                     let pid = *list.get(process).unwrap();
-                    println!("Killing process {process} : {pid}");
                     kill_process(process, pid)?;
+                    println!("Killed {process} : {pid}");
                 }
             }
 
