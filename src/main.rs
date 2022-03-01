@@ -1,4 +1,3 @@
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::error::Error;
 use std::ffi::CString;
@@ -81,7 +80,7 @@ pub enum ProcessError {
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Data {
-    processes: Vec<RefCell<String>>,
+    processes: Vec<String>,
     poll_frequency: u64
 }
 
@@ -215,9 +214,6 @@ fn kill_process(name: &str, pid: u32) -> Result<(), ProcessError> {
 
 
 fn main() -> Result<(), Box<dyn Error>> {
-    // grab some needed program privileges
-    set_privilege(SE_DEBUG_NAME, true)?;
-
     // hide console
     let args: Vec<String> = std::env::args().collect();
     for arg in args {
@@ -226,10 +222,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     }
 
-
-    if !is_elevated() {
+    if is_elevated() {
+        // this privilege is required to kill SYSTEM processes
+        set_privilege(SE_DEBUG_NAME, true)?;
+    } else {
         println!(
-            "Warning: the program isn’t running as elevated; it may fail to kill some processes."
+            "Warning: the program isn't running as elevated; it may fail to kill some processes."
         );
     }
 
@@ -238,7 +236,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         DEFAULT.to_string()
     });
 
-    let data: Data = serde_json::from_str(&json)?;
+    let mut data: Data = serde_json::from_str(&json)?;
 
     let (tx, rx) = channel();
 
@@ -246,8 +244,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         .expect("Error setting Ctrl-C handler");
 
     // lowercase all of the entries
-    for process in &data.processes {
-        process.replace_with(|p| p.to_lowercase());
+    for process in &mut data.processes.iter_mut() {
+        *process = process.to_lowercase();
     }
 
     // all refresh kinds set to false
@@ -262,7 +260,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
             let list: HashMap<_, _> = sys.processes().iter().map(|(pid, process)| (process.name().to_lowercase(), pid.as_u32())).collect();
             for _p in &data.processes {
-                let process = &*format!("{}.exe", _p.borrow());
+                let process = &*format!("{_p}.exe");
                 if list.contains_key(process) {
                     let pid = *list.get(process).unwrap();
                     println!("Killing process {process} : {pid}");
