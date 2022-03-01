@@ -16,8 +16,6 @@ use windows::core::PCSTR;
 
 use thiserror::Error;
 
-use is_elevated::is_elevated;
-
 use std::sync::mpsc::channel;
 use ctrlc;
 
@@ -216,20 +214,15 @@ fn kill_process(name: &str, pid: u32) -> Result<(), ProcessError> {
 fn main() -> Result<(), Box<dyn Error>> {
     // hide console
     let args: Vec<String> = std::env::args().collect();
-    for arg in args {
-        if arg == "--hide" || arg == "-h" {
+    if let Some(v) = args.get(1) {
+        if v == "-h" || v == "--help" {
             hide_console();
         }
     }
 
-    if is_elevated() {
-        // this privilege is required to kill SYSTEM processes
-        set_privilege(SE_DEBUG_NAME, true)?;
-    } else {
-        println!(
-            "Warning: the program isn't running as elevated; it may fail to kill some processes."
-        );
-    }
+    // this privilege is required to kill SYSTEM processes
+    // It requires Admin, but we enforce that in the manifest build.rs
+    set_privilege(SE_DEBUG_NAME, true)?;
 
     let json = std::fs::read_to_string("config.json").unwrap_or_else(|_| {
         std::fs::write("config.json", DEFAULT.as_bytes()).expect("Failed to write file");
