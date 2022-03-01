@@ -22,6 +22,8 @@ use is_elevated::is_elevated;
 use std::sync::mpsc::channel;
 use ctrlc;
 
+use std::thread;
+
 
 lazy_static! {
     static ref DEFAULT: &'static str = r#"
@@ -211,37 +213,6 @@ fn kill_process(name: &str, pid: u32) -> Result<(), ProcessError> {
     Ok(())
 }
 
-struct ProcessManager {
-    sys: System,
-    prk: ProcessRefreshKind,
-    data: Data
-}
-
-impl ProcessManager {
-    fn new(sys: System, prk: ProcessRefreshKind, data: Data) -> Self {
-        ProcessManager {
-            sys, prk, data
-        }
-    }
-
-    fn poll_and_kill(&mut self) -> Result<(), ProcessError> {
-        self.sys.refresh_processes_specifics(self.prk);
-
-        let list: HashMap<_, _> = self.sys.processes().iter().map(|(pid, process)| (process.name().to_lowercase(), pid.as_u32())).collect();
-        for _p in &self.data.processes {
-            let process = &*format!("{}.exe", _p.borrow());
-            if list.contains_key(process) {
-                println!("Killing process {process}");
-                kill_process(process, *list.get(process).unwrap())?;
-            }
-        }
-
-        std::thread::sleep(std::time::Duration::from_secs(self.data.poll_frequency));
-
-        Ok(())
-    }
-}
-
 
 fn main() -> Result<(), Box<dyn Error>> {
     // grab some needed program privileges
@@ -283,18 +254,30 @@ fn main() -> Result<(), Box<dyn Error>> {
     let rk = RefreshKind::new();
     // everything set to false except process itself
     let prk = ProcessRefreshKind::new();
-    let sys = System::new_with_specifics(rk.with_processes(prk));
+    let mut sys = System::new_with_specifics(rk.with_processes(prk));
 
-    let mut process_manager = ProcessManager::new(sys, prk, data);
+    thread::spawn(move || {
+        loop {
+            sys.refresh_processes_specifics(prk);
 
-    loop {
-        process_manager.poll_and_kill()?;
+            let list: HashMap<_, _> = sys.processes().iter().map(|(pid, process)| (process.name().to_lowercase(), pid.as_u32())).collect();
+            for _p in &data.processes {
+                let process = &*format!("{}.exe", _p.borrow());
+                if list.contains_key(process) {
+                    println!("Killing process {process}");
+                    kill_process(process, *list.get(process).unwrap())?;
+                }
+            }
 
-        match rx.try_recv() {
-            Ok(_) => break,
-            Err(_) => ()
+            std::thread::sleep(std::time::Duration::from_secs(data.poll_frequency));
         }
-    }
+
+        #[allow(unreachable_code)]
+        Ok::<(), ProcessError>(())
+    });
+
+
+    rx.recv()?;
 
     Ok(())
 }
