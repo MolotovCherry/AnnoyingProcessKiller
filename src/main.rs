@@ -17,6 +17,8 @@ use windows::core::PCSTR;
 
 use thiserror::Error;
 
+use is_elevated::is_elevated;
+
 use std::sync::mpsc::channel;
 use ctrlc;
 
@@ -251,6 +253,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         if arg == "--hide" || arg == "-h" {
             hide_console();
         }
+    }
+
+
+    if !is_elevated() {
+        println!(
+            "Warning: the program isn’t running as elevated; it may fail to kill some processes."
+        );
     }
 
     let json = std::fs::read_to_string("config.json").unwrap_or_else(|_| {
