@@ -1,35 +1,11 @@
-[package]
-name = "process-killer"
-version = "0.1.0"
-edition = "2021"
-build = "build.rs"
+[workspace]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[package.metadata.winres]
-OriginalFilename = "PROCESS-KILLER.EXE"
-FileDescription = "Annoying Process Killer"
-
-[build-dependencies]
-winres = "0.1.12"
-
-[dependencies]
-sysinfo = "0.23.4"
-serde_json = "1.0"
-lazy_static = "1.4.0"
-serde = { version = "1.0.136", features = ["derive"] }
-thiserror = "1.0.30"
-ctrlc = "3.2.1"
-
-[dependencies.windows]
-version = "0.33.0"
-features = [
-    "Win32_System_Threading",
-    "Win32_Foundation",
-    "Win32_Security",
-    "Win32_System_Console",
-    "Win32_System_SystemServices"
+members = [
+    "AnnoyingProcessKiller",
+    "WMI_Query"
 ]
 
 [profile.release]
-strip = "symbols"
+lto = true
+codegen-units = 1
+strip = true
